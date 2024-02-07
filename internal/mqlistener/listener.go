@@ -4,19 +4,17 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
-var mockMessages = []string{
-	"amount: 100; price: 10",
-	"amount: 200; price: 20",
-	"amount: 300; price: 30",
-	"amount: 400; price: 40",
-	"amount: 500; price: 50",
-	"amount: 600; price: 60",
-	"amount: 700; price: 70",
-	"amount: 800; price: 80",
-	"amount: 900; price: 90",
-	"amount: 1000; price: 100",
+var mockMessages = []string{}
+
+var pattern = "amount: %d; price: %d"
+
+func init() {
+	for i := 0; i < 100; i++ {
+		mockMessages = append(mockMessages, fmt.Sprintf(pattern, (i+1)*100, (i+1)*10))
+	}
 }
 
 type RabbitMQListener struct {
@@ -31,6 +29,7 @@ func (rl RabbitMQListener) Listen() {
 }
 
 func processMessage(message string) {
+	time.Sleep(1 * time.Second)
 	amount := extractAmount(message)
 	price := extractPrice(message)
 	fmt.Printf("Total: %s\n", calculateTotal(amount, price))
