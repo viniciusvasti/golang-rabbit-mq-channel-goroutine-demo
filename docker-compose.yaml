@@ -1,0 +1,26 @@
+version: '3.7'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: admin
+      RABBITMQ_PASS: admin
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq
