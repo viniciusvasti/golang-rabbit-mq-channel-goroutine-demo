@@ -51,6 +51,7 @@ func (rl RabbitMQListener) Listen() {
 	select {}
 }
 
+// allows messages in the amqp channel to be processed in a concurrent thread
 func worker(dataChannel <-chan amqp.Delivery) {
 	for message := range dataChannel {
 		processMessage(string(message.Body))
