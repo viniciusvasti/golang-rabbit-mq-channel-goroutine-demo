@@ -11,6 +11,8 @@ import (
 	"github.com/viniciusvasti/golang-rabbit-mq-channel-goroutine-demo/internal/util"
 )
 
+var workerPoolSize = 5
+
 type RabbitMQListener struct {
 	conn *amqp.Connection
 }
@@ -49,12 +51,18 @@ func (rl RabbitMQListener) Listen() {
 
 	forever := make(chan string)
 
-	for d := range msgs {
-		processMessage(string(d.Body))
+	for i := 0; i < workerPoolSize; i++ {
+		go worker(msgs)
 	}
 
 	// makes the listener run forever
 	<-forever
+}
+
+func worker(dataChannel <-chan amqp.Delivery) {
+	for message := range dataChannel {
+		processMessage(string(message.Body))
+	}
 }
 
 func processMessage(message string) {
