@@ -7,6 +7,7 @@ import (
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/viniciusvasti/golang-rabbit-mq-channel-goroutine-demo/internal/services"
 	"github.com/viniciusvasti/golang-rabbit-mq-channel-goroutine-demo/internal/util"
 )
 
@@ -33,16 +34,7 @@ func (rp RabbitMQPublisher) Publish() {
 	util.FailOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
-	log.Println("Declaring a queue if not exists")
-	q, err := ch.QueueDeclare(
-		"cart", // name
-		false,  // durable
-		false,  // delete when unused
-		false,  // exclusive
-		false,  // no-wait
-		nil,    // arguments
-	)
-	util.FailOnError(err, "Failed to declare a queue")
+	q := services.CreateQueue(ch)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
