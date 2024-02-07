@@ -25,7 +25,7 @@ func (rl RabbitMQListener) Listen() {
 	// Create a channel to write messages to
 	dataChannel := make(chan string)
 	// Define the amount of workers (concurrent processes) to be used
-	workersAmount := 3
+	workersAmount := 10
 	for i := 0; i < workersAmount; i++ {
 		// Start the workers (concurrent processes) which will process the messages in the channel
 		go worker(dataChannel)
