@@ -22,10 +22,25 @@ type RabbitMQListener struct {
 
 func (rl RabbitMQListener) Listen() {
 	fmt.Println("Listening to RabbitMQ")
+	// Create a channel to write messages to
+	dataChannel := make(chan string)
+	// Define the amount of workers (concurrent processes) to be used
+	workersAmount := 3
+	for i := 0; i < workersAmount; i++ {
+		// Start the workers (concurrent processes) which will process the messages in the channel
+		go worker(dataChannel)
+	}
 	for _, message := range mockMessages {
-		processMessage(message)
+		// Write the message to the channel
+		dataChannel <- message
 	}
 	fmt.Println("Finished listening to RabbitMQ")
+}
+
+func worker(dataChannel chan string) {
+	for message := range dataChannel {
+		processMessage(message)
+	}
 }
 
 func processMessage(message string) {
