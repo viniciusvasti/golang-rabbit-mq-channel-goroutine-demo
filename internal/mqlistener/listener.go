@@ -12,7 +12,7 @@ import (
 	"github.com/viniciusvasti/golang-rabbit-mq-channel-goroutine-demo/internal/util"
 )
 
-var workerPoolSize = 5
+const workerPoolSize = 5
 
 type RabbitMQListener struct {
 	conn *amqp.Connection
@@ -41,14 +41,14 @@ func (rl RabbitMQListener) Listen() {
 	)
 	util.FailOnError(err, "Failed to register a consumer")
 
-	forever := make(chan string)
+	// forever := make(chan struct{})
 
 	for i := 0; i < workerPoolSize; i++ {
 		go worker(msgs)
 	}
 
 	// makes the listener run forever
-	<-forever
+	select {}
 }
 
 func worker(dataChannel <-chan amqp.Delivery) {
