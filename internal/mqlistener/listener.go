@@ -2,52 +2,66 @@ package mqlistener
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
+
+	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/viniciusvasti/golang-rabbit-mq-channel-goroutine-demo/internal/util"
 )
 
-var mockMessages = []string{}
-
-var pattern = "amount: %d; price: %d"
-
-func init() {
-	for i := 0; i < 100; i++ {
-		mockMessages = append(mockMessages, fmt.Sprintf(pattern, (i+1)*100, (i+1)*10))
-	}
+type RabbitMQListener struct {
+	conn *amqp.Connection
 }
 
-type RabbitMQListener struct {
+func NewRabbitMQListener(conn *amqp.Connection) RabbitMQListener {
+	return RabbitMQListener{conn: conn}
 }
 
 func (rl RabbitMQListener) Listen() {
-	fmt.Println("Listening to RabbitMQ")
-	// Create a channel to write messages to
-	dataChannel := make(chan string)
-	// Define the amount of workers (concurrent processes) to be used
-	workersAmount := 10
-	for i := 0; i < workersAmount; i++ {
-		// Start the workers (concurrent processes) which will process the messages in the channel
-		go worker(dataChannel)
-	}
-	for _, message := range mockMessages {
-		// Write the message to the channel
-		dataChannel <- message
-	}
-	fmt.Println("Finished listening to RabbitMQ")
-}
+	ch, err := rl.conn.Channel()
+	util.FailOnError(err, "Failed to open a channel")
+	defer ch.Close()
 
-func worker(dataChannel chan string) {
-	for message := range dataChannel {
-		processMessage(message)
+	log.Println("Declaring a queue if not exists")
+	q, err := ch.QueueDeclare(
+		"cart", // name
+		false,  // durable
+		false,  // delete when unused
+		false,  // exclusive
+		false,  // no-wait
+		nil,    // arguments
+	)
+	util.FailOnError(err, "Failed to declare a queue")
+
+	log.Println("Listening to RabbitMQ")
+	msgs, err := ch.Consume(
+		q.Name, // queue
+		"",     // consumer
+		true,   // auto-ack
+		false,  // exclusive
+		false,  // no-local
+		false,  // no-wait
+		nil,    // args
+	)
+	util.FailOnError(err, "Failed to register a consumer")
+
+	forever := make(chan string)
+
+	for d := range msgs {
+		processMessage(string(d.Body))
 	}
+
+	// makes the listener run forever
+	<-forever
 }
 
 func processMessage(message string) {
 	time.Sleep(1 * time.Second)
 	amount := extractAmount(message)
 	price := extractPrice(message)
-	fmt.Printf("Total: %s\n", calculateTotal(amount, price))
+	log.Printf("Total: %s\n", calculateTotal(amount, price))
 }
 
 func calculateTotal(amount string, price string) string {
