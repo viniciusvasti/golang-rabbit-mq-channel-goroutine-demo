@@ -1,3 +1,6 @@
+## Blog Post
+https://vinisantos.dev/posts/golang-rabbit-mq-channel-goroutine
+
 ## Running
 Make sure you have a docker daemon running and go installed.
 Then, in your terminal run the following in the project's root directory:
